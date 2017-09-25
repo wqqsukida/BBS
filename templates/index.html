@@ -1,0 +1,449 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>抽屉新热榜-聚合每日热门、搞笑、有趣资讯</title>
+    <link rel="icon" href="{% static "img/chouti.ico" %}">
+    <link rel="stylesheet" href="{% static "dist/css/bootstrap.css" %}">
+    <link rel="stylesheet"  href="{% static "css/bbs_index.css" %}">
+</head>
+<body>
+    <!-- 页面头部 -->
+    <div class="head-band">
+        <div class="head-content">
+            <a href="/index/" class="digg-logo"></a>
+            <div class="action-menu"> <!--新闻类型标签-->
+                {% if not current_type_id %}
+                    <a href="/index/" id ="active_a" class="tb active" style="background-color:#204982;color: white">全部</a>
+                {% else %}
+				    <a href="/index/" id ="active_a" class="tb active" >全部</a>
+                {% endif %}
+                {% for news_type in news_type_list %}
+                    {% if current_type_id == news_type.id %}
+                        <a href="/index/{{ news_type.id }}/" class="tb" style="background-color:#204982;color: white">{{ news_type.caption }}</a>
+                    {% else %}
+                        <a href="/index/{{ news_type.id }}/" class="tb">{{ news_type.caption }}</a>
+                    {% endif %}
+                {% endfor %}
+			</div>
+            <div class="key-sera">
+                <form action="/index/" method="get" name="searchFrm2" id="searchFrm2">
+                    <input type="text" class="search-txt-s" name="search_string" id="txtSearch2" autocomplete="off">
+                    <a  class="i" name="searchBtn_2" id="searchBtn_3">
+                        <span class="ico"></span>
+                    </a>
+                </form>
+            </div>
+            <div class="action-nav">
+
+                {% if user_dict %}
+                    <p>{{ username }}</p>
+                    <a href="/logout/" >注销</a>
+                {% else %}
+                    <p data-toggle="modal" data-target="#RegisterModal" class="login-btn-a" id="reg-link-a">注册</p>
+                    <p data-toggle="modal" data-target="#LoginModal" class="login-btn-a" id="login-link-a">登录</p>
+                {% endif %}
+
+                <span>
+                    <div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+                          <div class="modal-dialog register_login" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="exampleModalLabel">注册</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <form class="register-form">
+                                        <div class="form-group">
+                                            <label for="user-name" class="control-label">用户名:</label>
+                                            {{ register_form.username }}
+{#                                            <input type="text" class="form-control" id="user-name">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="pass-word" class="control-label">密码:</label>
+                                            {{ register_form.password }}
+{#                                            <input type="text" class="form-control" id="pass-word">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="confirm-pwd" class="control-label">确认密码:</label>
+                                            {{ register_form.password_confirm }}
+{#                                            <input type="text" class="form-control" id="confirm-pwd">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="E-mail" class="control-label">邮箱:</label>
+                                            {{ register_form.email }}
+{#                                            <input type="text" class="form-control" id="E-mail">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="phone-num" class="control-label">手机:</label>
+                                            {{ register_form.phone }}
+{#                                            <input type="text" class="form-control" id="phone-num">#}
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button  class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    <button id="register-btn"  class="btn btn-primary">注册</button>
+                                </div>
+                            </div>
+                          </div>
+                    </div>
+                </span>
+                <span>
+                    <div class="modal fade" id="LoginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+                          <div class="modal-dialog register_login" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="exampleModalLabel">登录</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <form class="login-form">
+                                        <div class="form-group">
+                                            <label for="user-name" class="control-label">用户名:</label>
+                                            {{ login_form.username }}
+{#                                            <input type="text" class="form-control" id="user-name">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="pass-word" class="control-label">密码:</label>
+                                            {{ login_form.password }}
+{#                                            <input type="text" class="form-control" id="pass-word">#}
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    <button id="login-btn" type="button" class="btn btn-primary">登录</button>
+                                </div>
+                            </div>
+                          </div>
+                    </div>
+                </span>
+
+
+		    </div>
+        </div>
+
+
+    </div>
+
+
+
+    <div class="main-content-band">
+        <div class="main-content">
+            <div class="content-L">
+                <!-- 最新最热按钮 -->
+                <div class="nav-top-area" style="margin-bottom: 0px;">
+                    <div class="child-nav">
+                        <a href="" hidefocus="false" class="hotbtn active icons" id="hotts-nav-btn">最热</a>
+                        <a href="" hidefocus="false" class="newbtn" id="newest-nav-btn">发现</a>
+                        <a href="" hidefocus="false" class="personbtn" id="person-nav-btn">人类发布</a>
+                    </div>
+                    <div class="sort-nav">
+                        <a href="" hidefocus="false" class="active hotbtn" id="sort-nav-btn">即时排序</a>
+                        <a href="" hidefocus="false" class="newbtn" id="sort24-nav-btn">24小时</a>
+                        <a href="" hidefocus="false" class="newbtn" id="sort3-nav-btn">3天</a>
+                    </div>
+				    <p data-toggle="modal" data-target="#PublishModal" class="publish-btn" id="publishBtn" lang="all">
+					    <span class="ico n1"></span>
+                        <span class="n2">发布</span>
+				    </p>
+                   <span>
+                    <div class="modal fade" id="PublishModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+                          <div class="modal-dialog register_login" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="exampleModalLabel">发布</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <form class="publish-form" novalidate>
+                                        <div class="form-group">
+                                            <label for="url-tag" class="control-label">链接:</label>
+                                            {{ publish_form.url }}
+{#                                            <input type="text" class="form-control" id="url-tag">#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="title-tag" class="control-label">标题:</label>
+                                            {{ publish_form.title }}
+{#                                            <input type="text" class="form-control" id="title-tag">#}
+                                        </div>
+                                         <div class="form-group">
+                                            <label for="picture-tag" class="control-label">图片:</label>
+                                             {{ publish_form.avatar }}
+                                            <input type="file" style="display: inline-block" id="picture-tag">
+                                             <p class="btn btn-success send-img-btn">上传并预览</p>
+                                             <div id="img-container"></div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="summary-tag" class="control-label">摘要:</label>
+                                            {{ publish_form.summary }}
+{#                                            <textarea class="form-control" id="summary-tag" cols="30" rows="5"></textarea>#}
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="new-type" class="control-label">发布到:</label>
+                                            {{ publish_form.new_type_id }}
+{#                                            <select class="form-control" id="new-type"></select>#}
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    <button id="publish-btn" type="button" class="btn btn-primary">发布</button>
+                                </div>
+                            </div>
+                          </div>
+                    </div>
+                </span>
+			    </div>
+                <!--内容显示区域-->
+                <div class="content-list" id="content-list">
+                    {% for new in news_list %}
+                    <div class="item">
+                        <div class="news-pic">
+                            <img src="{{ new.avatar }}" alt="抽屉新热榜" style="display: inline; cursor: -webkit-zoom-in;">
+                        </div>
+                        <div class="news-content" id="">
+                            <div class="part1">
+                                <a href="{{ new.url }}" class="show-content color-chag" target="_blank">
+                                    {{ new.summary }}
+                                </a>
+                                <span class="content-source">-{{ new.url }}</span>
+                                <a href="" class="n2">
+                                    <span class="content-kind">{{ new.new_type.caption }}</span>
+                                </a>
+                            </div>
+                            <div class="part2" newid="{{ new.id }}" style="padding-top: 16px;">
+                                <a  class="digg-a" title="推荐">
+                                    <span class="hand-icon icon-digg"></span>
+                                    <b>{{ new.like_count }}</b>
+                                </a>
+                                <a class="discus-a" title="评论">
+                                    <span class="hand-icon icon-discus"></span>
+                                    <b>{{ new.comment_count }}</b>
+                                </a>
+                                <a class="collect-a" title="加入私藏">
+                                    <span class="hand-icon icon-collect"></span>
+                                    <b>私藏</b>
+                                </a>
+                                <a href="" class="user-a">
+                                    <span><img src="/static/img/wow.ico"></span>
+                                    <b>{{ new.promulgator.username }}</b>
+                                </a>
+                                <span class="left time-into">
+                                    <a class="time-a" href="">
+                                        <b>{{ new.ctime|timesince }}</b>
+                                    </a>
+                                    <i>入热榜</i>
+                                </span>
+                                <span class="share-site-to" style="display: none;">
+                                    <i>分享到</i>
+                                    <span class="share-icon">
+                                        <a class="icon-sina" id="icon-sina" title="分享到新浪微博" href="" ></a>
+                                        <a class="icon-douban" id="icon-douban" title="分享到豆瓣" href="" ></a>
+                                        <a class="icon-qqzone" id="icon-qqzone" title="分享到QQ空间" href=""></a>
+                                        <a class="icon-renren" id="icon-renren" title="分享到人人网" href="" ></a>
+                                        <a class="share-none"> </a>
+                                    </span>
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="no-bottom"></div>
+                <div id="page-area" class="page-area">
+					 <div id="dig_lcpage">
+                         <ul>
+                             {{ page_str | safe }}
+                             <!--
+                             <li>
+                                 <span class="ct_pagepw">1</span>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/2" class="ct_pagepa">2</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/3" class="ct_pagepa">3</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/4" class="ct_pagepa">4</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/5" class="ct_pagepa">5</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/6" class="ct_pagepa">6</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/7" class="ct_pagepa">7</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/8" class="ct_pagepa">8</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/9" class="ct_pagepa">9</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/10" class="ct_pagepa">10</a>
+                             </li>
+                             <li>
+                                 <a href="/all/hot/recent/2" class="ct_page_edge">下一页</a>
+                             </li>
+                                -->
+                         </ul>
+                     </div>
+			</div>
+            </div>
+            <div class="content-R">
+                <div>
+                    <a style="width:300px; height: 66px;" href="http://www.12377.cn/" target="_blank">
+                        <img src="/static/img/report.jpg">
+                    </a>
+                </div>
+                <div style="margin-top:10px;">
+                    <a target="_blank" href="" class="btn-notice">
+                        如何避免自己被封号
+                    </a>
+                </div>
+                <a target="_blank" href="" id="download_bg">
+                    <img src="/static/img/homepage_download.png">
+                </a>
+                <div class="top-band" id="top-band">
+                    <em class="top-band-type" style="display: block;">
+                        24小时
+                        <em>全部</em>
+                        <span> TOP 10</span>
+                    </em>
+                    <div class="top-band-title" style="display: block;">
+                        <a class="no-comment-title">最热榜</a>
+                        <em id="top-bandArrow" style="left: 145px;"></em>
+                    </div>
+                    <div id="top-content-news">
+
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">325</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">[新卡讨论]7月25日 NGA首发 潜行者职业新卡，瘟疫科学家，3/2/3，连击 使一个友方随从获得剧毒 ​</a>
+                        </div>
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">272</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">[战报贴]Method放出基尔加丹首杀视频！附BGM列表，基尔加丹大幅削弱，7.3团本周末开测 ​</a>
+                        </div>
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">231</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">各职业T21套装奖励预览(更新至7月26日 - 24651) ​</a>
+                        </div>
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">188</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">[有感而发] 付出并不等于会得到回报 在一个团长可能已经正在移除我出公会的同时 一个的团员的感触 ​</a>
+                        </div>
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">166</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">和谐讨论，为什么国服部落人口比联盟多，支持你选择联盟/部落的原因是什么？ ​</a>
+                        </div>
+                        <div class="top-item">
+                            <div class="top-points">
+                                <a href="/link/13288016" class="points-a">105</a>
+                            </div>
+                            <a class="top-content" href="/link/13288016" target="_blank">2017ChinaJoy暴雪展台专题：人气主播齐聚 巫妖王送雪糕 ​</a>
+                        </div>
+
+                    </div>
+                    <div style="display: none;" id="top-content-comments">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="footer-band">
+            <div class="foot-nav">
+                <a href="/help/about" target="_blank">关于我们</a>
+                <span>|</span>
+                <a href="/help/contact" target="_blank">联系我们</a>
+                <span>|</span>
+                <a href="/help/service" target="_blank">服务条款</a>
+                <span>|</span>
+                <a href="/help/privacy" target="_blank">隐私政策</a>
+                <span>|</span>
+                <a href="/help/tool" target="_blank">抽屉新热榜工具</a>
+                <span>|</span>
+                <a href="/download/model" target="_blank">下载客户端</a>
+                <span>|</span>
+                <a href="/feedback" target="_blank">意见与反馈</a>
+                <span>|</span>
+                <a href="/help/goodlink" target="_blank">友情链接</a>
+                <span>|</span>
+                <a href="http://www.shouye.com/Index.do?method=show&amp;pageId=44251&amp;jid=xinrebang@gozap.com" target="_blank">公告</a>
+                <a href="http://dig.chouti.com/feed.xml" target="_blank" style="margin-left:0;vertical-align:-2px;" title="Rss订阅，Feed地址：http://dig.chouti.com/feed.xml">
+                    <img src="/static/img/ct_rss.gif" height="14" width="36">
+                </a>
+            </div>
+            <div class="foot-nav2">
+                <a target="_blank" href="http://www.gozap.com/">
+                    <img class="foot_e" src="/static/img/gozap-logo-50_15.gif">
+                </a>
+                <span class="foot_d">旗下站点</span>
+                <span class="foot_a">©2017chouti.com</span>
+                <a target="_blank" href="http://www.miibeian.gov.cn/" class="foot_b">
+                    京ICP备09053974号-3 京公网安备 110102004562
+                </a>
+                <div style="margin-top:6px;">
+                    <span class="foot_d">违法和不良信息举报：</span>
+                    <span class="foot_a">电话：010-58302039  </span>
+                    <span class="foot_a" style="margin-left: 15px;">
+                        邮箱：
+                        <a style="color: #369;margin-right: 10px;" href="mailto:jubao@chouti.com">
+                            jubao@chouti.com
+                        </a>
+                    </span>
+                </div>
+                <div style="margin-top:6px;">版权所有：北京XXX科技有限公司</div>
+            </div>
+        </div>
+    </div>
+    <div id="return_top" class="returnTop hide" title="返回顶部"></div>
+<script src="{% static "js/jquery-3.1.1.js" %}"></script>
+<script src="{% static "js/jquery.cookie.js" %}"></script>
+<script src="{% static "dist/js/bootstrap.js" %}"></script>
+<script src="{% static "js/bbs_index.js" %}"></script>
+<script type="text/javascript">
+        $(function(){ //当页面加载完成之后，默认执行该函数
+            $("#return_top").click(function(){
+                $(window).scrollTop(0);
+            })
+        });
+
+        $(window).scroll(function(){
+            var page_height = $(window).scrollTop();
+{#            console.log(page_height);#}
+                if(page_height>0){
+                    //显示返回顶部
+                    $("#return_top").removeClass("hide");
+
+                }else{
+                    //隐藏返回顶部
+                    $("#return_top").addClass("hide");
+                }
+            }
+        );
+        /*
+        function GoTop(){
+                $(window).scrollTop(0);
+        }
+        */
+    </script>
+</body>
+</html>

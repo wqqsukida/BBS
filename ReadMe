@@ -1,0 +1,38 @@
+###关于BBS系统（2017-09-21）：
+***
+需求：
+
+    - BBS项目练习：
+        地址：http://dig.chouti.com/
+        要求：
+            表结构设计
+            功能开发：
+                页面样式和布局
+                文章列表（分页）
+                点赞：思路，发送ajax请求：
+							- 判断：
+								已经存在： like表中删除一条记录，new中like_count,自减1
+								不存在： like表中天剑一条记录，new中like_count,自加1
+							- 登录之后才能点赞
+
+                发布文章（上传图片）
+					1. 根据URL，自动获取标题和摘要
+					   pip3 install beautifulsoup4
+					   pip3 install requests
+					   点击：
+							发送Ajax请求，将 http://music.163.com/#/song?id=188057 发送到后台
+					2. 基于Ajax实现图片上传
+						隐藏的Input框，放置头像路径
+
+***
+实现：
+1. 登录&注册：(Ajax+Django.Form实现)
+* 提供Dylan,Elaine,user01,user02,user03,艾泽拉斯国家地理 6个账号，密码均为123；
+* 运行python manage.py runserver 8080 后登录 http://127.0.0.1:8080/index/
+2. 点赞:(Ajax)
+* 登录后的用户可以对文章点赞，每个用户只能对同一文章点一次赞，非登录状态点赞会弹出登录模态框；
+* 点赞后不刷新页面直接+1点赞数。
+3. 发布&上传预览图片：(Ajax+Django.Form)
+* 点击发布按钮（非登录状态无法提交）,将url地址粘贴到"链接"，会自动获取"标题"、"摘要"；
+* 点击"上传并预览"，会将选择的图片上传到/static/img下，并展示在发布模态框；
+* 发布文章后会在index页面的顶置，并显示图片。
