@@ -57,7 +57,7 @@ def index(request,*args,**kwargs):
         print(user_dict)
         if user_dict:
             username = user_dict['user']
-
+            user_id = user_dict['user_id']
         return render(request,"index.html",locals())
 
 
@@ -169,18 +169,134 @@ def upload_img(request):
     print('ImgPath:',data['path'])
     return HttpResponse(json.dumps(data))
 
+from utils.response import BaseResponse,LikeResponse
+from django.db import transaction
+
 @auth
 def digg(request):
     if request.method == "POST":
-        response = {'status': True, 'data': None, 'msg': None}
-        new_id = request.POST.get('new_id')
-        user_id = request.session.get('is_login', None).get('user_id')
-        if not Like.objects.filter(news_id=new_id,user_id=user_id):
-            News.objects.filter(id=new_id).update(like_count=F('like_count')+1)
-            Like.objects.create(news_id=new_id,user_id=user_id)
-            response['msg'] = ''
+        response = LikeResponse()
+        try:
+            new_id = request.POST.get('new_id')
+            user_id = request.session.get('is_login', None).get('user_id')
+            with transaction.atomic(): # 以事务的方式提交
+                if not Like.objects.filter(news_id=new_id,user_id=user_id):
+                    News.objects.filter(id=new_id).update(like_count=F('like_count')+1)
+                    Like.objects.create(news_id=new_id,user_id=user_id)
+                    response.code = 'digg_up'
+                else:
+                    News.objects.filter(id=new_id).update(like_count=F('like_count') - 1)
+                    Like.objects.filter(news_id=new_id, user_id=user_id).delete()
+                    response.code = 'digg_down'
+        except Exception as e :
+            response.msg = str(e)
         else:
-            response['msg'] = ''
-            response['status'] = False
-        print(response)
-        return HttpResponse(json.dumps(response))
+            response.status = True
+
+        print(response.get_dict())
+        return HttpResponse(json.dumps(response.get_dict()))
+
+
+
+def build_comment_data(li):
+    dic = {}
+    for item in li:
+        item['children'] = []
+        dic[item['id']] = item
+
+    result = []
+    for item in li:
+        pid = item['parent_id']
+        if pid:
+            dic[pid]['children'].append(item)
+        else:
+            result.append(item)
+
+    return result
+
+def build_comment_tree(com_list):
+    """
+l = [{'parent_id': None, 'ctime': None, 'id': 1, 'commenter_id__username': '艾泽拉斯国家地理', 'content': '这是最新回复1', 'children': [
+    {'parent_id': 1, 'ctime': None, 'id': 3, 'commenter_id__username': 'user02', 'content': '这是最新回复1-1', 'children': [
+        {'parent_id': 3, 'ctime': None, 'id': 5, 'commenter_id__username': 'Dylan', 'content': '这是最新回复1-1-1', 'children': []},
+        {'parent_id': 3, 'ctime': None, 'id': 6, 'commenter_id__username': 'Elaine', 'content': '这是最新回复1-1-2', 'children': []}]},
+    {'parent_id': 1, 'ctime': None, 'id': 4, 'commenter_id__username': 'user03', 'content': '这是最新回复1-2', 'children': []}]},
+     {'parent_id': None, 'ctime': None, 'id': 2, 'commenter_id__username': 'user01', 'content': '这是最新回复2', 'children': []}]
+
+    """
+    tpl = """
+    <ul class="comment-list">
+        <li class="comment-reply">
+            <div class="comment-R comment-R-top" >
+                <a class="name" href="">{0}:</a>
+                <span class="p3">{1}</span>
+                <span class="into-time into-time-top">发布时间：{2}</span>
+                <a class="reply-user" comid={3}>【回复】</a>
+            </div>
+        </li>
+        {4}
+    </ul>
+    """
+    html = ""
+    for item in com_list:
+        ctime = item['ctime'].strftime('%Y-%m-%d %X')
+        if not item['children']:
+            html +=tpl.format(item['commenter_id__username'],item['content'],ctime,item['id'],"")
+        else:
+            html +=tpl.format(item['commenter_id__username'], item['content'],ctime,item['id'], build_comment_tree(item['children']))
+    return html
+
+def comment_list(request):
+    """
+    获取多级评论列表
+    :param request:
+    :return:
+    """
+    new_id = request.POST.get('new_id')
+    li =  Comment.objects.filter(comment_new_id=new_id).values('id','content','ctime','commenter_id__username','parent_id').order_by('-ctime')
+    '''
+    li = [{'ctime': None, 'commenter_id__username': '艾泽拉斯国家地理', 'id': 1, 'content': '这是最新回复1', 'parent_id': None},
+          {'ctime': None, 'commenter_id__username': 'user01', 'id': 2, 'content': '这是最新回复2', 'parent_id': None},
+          {'ctime': None, 'commenter_id__username': 'user02', 'id': 3, 'content': '这是最新回复1-1', 'parent_id': 1},
+          {'ctime': None, 'commenter_id__username': 'user03', 'id': 4, 'content': '这是最新回复1-2', 'parent_id': 1},
+          {'ctime': None, 'commenter_id__username': 'Dylan', 'id': 5, 'content': '这是最新回复1-1-1', 'parent_id': 3},
+          {'ctime': None, 'commenter_id__username': 'Elaine', 'id': 6, 'content': '这是最新回复1-1-2', 'parent_id': 3}]
+    '''
+
+    com_list = build_comment_data(li)
+    """
+    {'user': '银秋良', 'children': [{'user': '型谱', 'children': [{'user': '银秋良', 'children': [], 'parent_id': 3, 'content': '你是流氓', 'id': 5}], 'parent_id': 1, 'content': '你个文盲', 'id': 3}], 'parent_id': None, 'content': '灌我鸟事', 'id': 1}
+    {'user': '银秋良', 'children': [{'user': '详解', 'children': [], 'parent_id': 2, 'content': '好羡慕你们这些没脸的人呀', 'id': 4}], 'parent_id': None, 'content': '管我鸟事', 'id': 2}
+    """
+
+    html = build_comment_tree(com_list)
+    # return render(request,'index.html',{'comment_html':html})
+    return HttpResponse(html)
+
+def add_pub(request):
+    response = BaseResponse()
+
+    try:
+
+        comment_new_id = request.POST.get('comment_new_id')
+        commenter_id = request.POST.get('commenter_id')
+        content = request.POST.get('content')
+        parent_id = request.POST.get('parent_id',None)
+        print(comment_new_id,commenter_id,content)
+        with transaction.atomic():  # 以事务的方式提交
+
+            News.objects.filter(id=comment_new_id).update(comment_count=F('comment_count') + 1)
+            Comment.objects.create(comment_new_id=comment_new_id,
+                                   commenter_id=commenter_id,
+                                   content=content,
+                                   parent_id=parent_id
+                                   )
+
+    except Exception as e:
+        response.msg = str(e)
+
+    else:
+        response.status = True
+
+    print(response.get_dict())
+    return HttpResponse(json.dumps(response.get_dict()))

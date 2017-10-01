@@ -100,6 +100,26 @@ $("#url-tag").blur(function () {
 });
 
 //上传图片事件
+function changeImg() {
+    // console.log($('#picture-tag').val());
+    document.getElementById('img-form').submit();
+}
+
+function successCallBack(ths){
+    // console.log(123);
+    var response = ths.contentWindow.document.body.innerHTML;
+    // var response = $(document.getElementById('ifm_target').contentWindow.document.body).html();
+    response = JSON.parse(response);
+    console.log(response);
+    var img = document.createElement('img');
+    img.src = "/" + response.path;
+    img.style = "max-width:100%";
+    $('#img-container').empty(); //先清空img容器标签
+    $('#img-container').append(img); //再加入img容器标签
+    $('#img-name').text($('#picture-tag').val());
+    $('#avatar-tag').val("\\" + response.path); //将图片路径加到隐藏的input框(form提交会提交这个路径)
+}
+
 $(".send-img-btn").click(function(){
     $(".publish-form .form-group .error").remove();
     // 获取文件
@@ -176,7 +196,7 @@ $("#content-list").on("click",".digg-a",function () {
     if($('.action-nav a[href="/logout/"]').length){ //判断是否存在注销标签
         // alert("点了个赞！");
         var new_id = $(this).parent().attr("newid");
-        var digg_count = $(this).children("b").text(); //当前显示点赞数
+        var $this = $(this); //当前操作标签
         // console.log(new_id);
         // console.log(digg_count);
         $.ajax({
@@ -188,10 +208,17 @@ $("#content-list").on("click",".digg-a",function () {
             success:function (arg){
                 if(arg.status){
                     // 前端点赞自加1
-                    $('.part2[newid="'+ new_id +'"] .digg-a b').text(parseInt(digg_count)+1);
-                    // location.href = "/index/";
+                    var origin = $this.children('b').text();
+                    var digg_count = parseInt(origin);
+                    if(arg.code == 'digg_up'){
+                        $this.children('b').text(digg_count + 1);
+                        showLikeCount($this,'点赞+1')
+                    }else if(arg.code == 'digg_down'){
+                        $this.children('b').text(digg_count - 1);
+                        showLikeCount($this,'点赞-1')
+                    }
                 }else{
-                    alert('你已经点过赞了！')
+                    alert('出现异常！',arg.msg)
                 }
             }
         })
@@ -199,4 +226,121 @@ $("#content-list").on("click",".digg-a",function () {
     else{ //不存在logout标签则弹出登录对话框
         $("#LoginModal").modal('show');
     }
+});
+
+
+function showLikeCount($this,text) {
+    var fontSize = 5;
+    var top = 0;
+    var right = 0;
+    var opacity = 1;
+
+    var tag = document.createElement('span');
+    // var tag = document.getElementById()
+    tag.innerText = text;
+    tag.style.position = "absolute";
+    // 默认大小
+    tag.style.fontSize = fontSize + "px";
+    tag.style.top = top + 'px';
+    tag.style.right = right + 'px';
+    tag.style.opacity = opacity;
+    $this.children('b').after(tag);
+
+    // 定时器，每0.5s执行一次
+    var obj = setInterval(function () {
+        fontSize += 2;
+        top -= 2;
+        right -= 2;
+        opacity -= 0.1;
+
+        tag.style.fontSize = fontSize + "px";
+        tag.style.top = top + 'px';
+        tag.style.right = right + 'px';
+        tag.style.opacity = opacity;
+        if(opacity <= 0){
+            clearInterval(obj);
+            tag.remove();
+        }
+    },100);
+
+}
+
+$("#content-list").on("click",".comment-reply",function () {
+   if($(this).siblings('.comment-list').hasClass('hide')){
+        $(this).siblings('.comment-list').removeClass('hide')
+   }else{
+        $(this).siblings('.comment-list').addClass('hide')
+   }
+});
+/*
+$('.comment-reply').click(function () {
+   if($(this).next('.comment-list').hasClass('hide')){
+        $(this).next('.comment-list').removeClass('hide')
+   }else{
+        $(this).next('.comment-list').addClass('hide')
+   }
+});
+*/
+//评论数量按钮绑定事件
+$("#content-list").on("click",".discus-a",function () {
+    var new_id = $(this).parent().attr("newid");
+    var $this = $(this).parent().siblings('.comment-box-area'); //当前操作标签
+    if($this.hasClass('hide')){
+        $.ajax({
+        url:"/comment_list/",
+        type:"POST",
+        headers:{"X-CSRFToken": $.cookie('csrftoken')},
+        data:{"new_id":new_id},
+        success:function (arg) {
+            // console.log(arg);
+            $this.children('.comment-box').append(arg)
+        }
+    });
+        $this.removeClass('hide')
+    }else{
+        $this.children('.comment-box').empty();
+        $this.addClass('hide')
+    }
+
+});
+
+//发布评论按钮绑定事件
+$("#content-list").on("click",".add-pub-btn",function () {
+    if($('.action-nav a[href="/logout/"]').length){ //判断是否存在注销标签
+        var new_id = $(this).parents(".comment-box-area").prev().attr("newid");
+        var user_id = $("#login-user").attr("userid");
+        var pub_content = $(this).parent().prev().children('.txt-huifu').val();
+        var parent_id = $(this).parent().prev().children('.reply-target').attr("reid");
+        var $this = $(this); //当前操作标签
+
+        console.log(new_id,user_id,pub_content,parent_id);
+        if(pub_content){
+            $.ajax({
+            url:"/add_pub/",
+            type:"POST",
+            headers:{"X-CSRFToken": $.cookie('csrftoken')},
+            data:{"comment_new_id":new_id,"commenter_id":user_id,"content":pub_content,
+            "parent_id":parent_id},
+            dataType:"JSON",
+            success:function (arg){
+                console.log(arg)
+            }
+        })
+
+        }
+
+    }
+    else{ //不存在logout标签则弹出登录对话框
+        $("#LoginModal").modal('show');
+    }
+});
+
+//每条评论后回复按钮绑定事件
+$("#content-list").on("click",".reply-user",function () {
+    console.log(123);
+    var reid = $(this).attr("comid");
+    var user = $(this).siblings(".name").text();
+    console.log(reid,user);
+    $(this).parents(".comment-box-area").find(".reply-target").attr("reid",reid);
+    $(this).parents(".comment-box-area").find(".reply-target").text("回复 "+ user);
 });

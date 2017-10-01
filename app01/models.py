@@ -36,7 +36,7 @@ class Comment(models.Model):
     ctime = models.DateTimeField(verbose_name='评论时间', auto_now_add=True)
     comment_new = models.ForeignKey(verbose_name='评论的新闻ID',to='News')
     commenter = models.ForeignKey(verbose_name='评论者',to='UserInfo')
-
+    parent = models.ForeignKey('Comment',related_name='pid',null=True,blank=True)
 
 # 第二种
 class Like(models.Model):

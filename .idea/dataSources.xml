@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="1025269123">
-    <data-source source="LOCAL" name="s17day21" uuid="5692fb1e-c68c-49aa-8f63-6c2229763658">
+  <component name="DataSourceManagerImpl" format="xml" hash="2369240465">
+    <data-source source="LOCAL" name="s17day22" uuid="303b552b-ead0-41d9-ac6b-555daa9d4c00">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:D:\python\python3\s17day21_dylan_wu_homework\BBS\db.sqlite3</jdbc-url>
+      <jdbc-url>jdbc:sqlite:D:\python\python3\s17day22_dylan_wu_homework\BBS\db.sqlite3</jdbc-url>
     </data-source>
   </component>
 </project>

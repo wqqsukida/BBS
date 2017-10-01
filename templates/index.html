@@ -38,7 +38,7 @@
             <div class="action-nav">
 
                 {% if user_dict %}
-                    <p>{{ username }}</p>
+                    <p id="login-user" userid="{{ user_id }}">{{ username }}</p>
                     <a href="/logout/" >注销</a>
                 {% else %}
                     <p data-toggle="modal" data-target="#RegisterModal" class="login-btn-a" id="reg-link-a">注册</p>
@@ -170,11 +170,11 @@
 {#                                            <input type="text" class="form-control" id="title-tag">#}
                                         </div>
                                          <div class="form-group">
-                                            <label for="picture-tag" class="control-label">图片:</label>
+{#                                            <label for="picture-tag" class="control-label"></label>#}
                                              {{ publish_form.avatar }}
-                                            <input type="file" style="display: inline-block" id="picture-tag">
-                                             <p class="btn btn-success send-img-btn">上传并预览</p>
-                                             <div id="img-container"></div>
+{#                                             <input type="file" style="display: inline-block" id="picture-tag">#}
+{#                                             <p class="btn btn-success send-img-btn">上传并预览</p>#}
+{#                                             <div id="img-container"></div>#}
                                         </div>
 
                                         <div class="form-group">
@@ -188,6 +188,23 @@
 {#                                            <select class="form-control" id="new-type"></select>#}
                                         </div>
                                     </form>
+
+                                    <div class="form-group"> <!--iframe实现伪ajax-->
+                                        <label class="control-label">图片:</label>
+                                        <form id="img-form" action="/upload_img/" method="post" target="ifm_target" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                            <p class="btn btn-success" style="display: inline-block;position: relative;left: 15%">
+                                                选择图片
+                                                <input type="file" name="img_data"  id="picture-tag" onchange="changeImg();">
+                                            </p>
+                                            <span id="img-name" style="position: relative;left: 17%"></span>
+{#                                            <input type="submit" class="btn btn-success" value="上传并预览">#}
+                                        </form>
+                                        <iframe id="ifm_target" name="ifm_target" style="display:none" onload="successCallBack(this)"></iframe>
+                                        <div id="img-container"></div>
+                                    </div>
+
+
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -249,7 +266,92 @@
                                     </span>
                                 </span>
                             </div>
-
+                            <div class="comment-box-area hide">
+                                <div class="comment-box ">
+                                    <!--评论树形-->
+                                    <!--<ul class="comment-list">
+                                    <li class="comment-reply">
+                                        <div class="comment-R comment-R-top" >
+                                            <a class="name" href="">熊猫快跑</a>
+                                            <span class="p3">这是回复1</span>
+                                            <span class="into-time into-time-top">22分钟前发布</span>
+                                            <span class="into-time s-phone"></span>
+                                        </div>
+                                    </li>
+                                    <ul class="comment-list">
+                                        <li class="comment-reply">
+                                            <div class="comment-R comment-R-top" >
+                                                <a class="name" href="">user01</a>
+                                                <span class="p3">这是回复1-1</span>
+                                                <span class="into-time into-time-top">22分钟前发布</span>
+                                                <span class="into-time s-phone"></span>
+                                            </div>
+                                        </li>
+                                        <li class="comment-reply">
+                                            <div class="comment-R comment-R-top" >
+                                                <a class="name" href="">user02</a>
+                                                <span class="p3">这是回复1-2</span>
+                                                <span class="into-time into-time-top">22分钟前发布</span>
+                                                <span class="into-time s-phone"></span>
+                                            </div>
+                                        </li>
+                                        <ul class="comment-list">
+                                            <li class="comment-reply">
+                                                <div class="comment-R comment-R-top" >
+                                                    <a class="name" href="">user01</a>
+                                                    <span class="p3">这是回复1-2-1</span>
+                                                    <span class="into-time into-time-top">22分钟前发布</span>
+                                                    <span class="into-time s-phone"></span>
+                                                </div>
+                                            </li>
+                                            <li class="comment-reply">
+                                                <div class="comment-R comment-R-top" >
+                                                    <a class="name" href="">user02</a>
+                                                    <span class="p3">这是回复1-2-2</span>
+                                                    <span class="into-time into-time-top">22分钟前发布</span>
+                                                    <span class="into-time s-phone"></span>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </ul>
+                                    <li class="comment-reply">
+                                        <div class="comment-R comment-R-top" >
+                                            <a class="name" href="">熊猫快飞</a>
+                                            <span class="p3">这是回复2</span>
+                                            <span class="into-time into-time-top">22分钟前发布</span>
+                                            <span class="into-time s-phone"></span>
+                                        </div>
+                                    </li>
+                                    <ul class="comment-list">
+                                        <li class="comment-reply">
+                                            <div class="comment-R comment-R-top" >
+                                                <a class="name" href="">user01</a>
+                                                <span class="p3">这是回复2-1</span>
+                                                <span class="into-time into-time-top">22分钟前发布</span>
+                                                <span class="into-time s-phone"></span>
+                                            </div>
+                                        </li>
+                                        <li class="comment-reply">
+                                            <div class="comment-R comment-R-top" >
+                                                <a class="name" href="">user02</a>
+                                                <span class="p3">这是回复2-2</span>
+                                                <span class="into-time into-time-top">22分钟前发布</span>
+                                                <span class="into-time s-phone"></span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </ul>-->
+                                </div>
+                                <div class="huifu-box" style="overflow: hidden">
+                                    <div class="txt-input-area">
+                                        <div class="reply-target" reid=""></div>
+                                        <textarea class="txt-huifu"></textarea>
+                                    </div>
+                                    <div class="huifu-btn">
+                                        <a class="add-pub-btn">评论</a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}

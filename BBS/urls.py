@@ -27,4 +27,6 @@ urlpatterns = [
     url(r'^publish/$', add_news),
     url(r'^upload_img/$', upload_img),
     url(r'^digg/$', digg),
+    url(r'^comment_list/$', comment_list),
+    url(r'^add_pub/$', add_pub),
 ]
