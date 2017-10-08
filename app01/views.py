@@ -202,6 +202,7 @@ def build_comment_data(li):
     dic = {}
     for item in li:
         item['children'] = []
+        item['ctime'] = item['ctime'].strftime('%Y-%m-%d %X')
         dic[item['id']] = item
 
     result = []
@@ -268,10 +269,10 @@ def comment_list(request):
     {'user': '银秋良', 'children': [{'user': '型谱', 'children': [{'user': '银秋良', 'children': [], 'parent_id': 3, 'content': '你是流氓', 'id': 5}], 'parent_id': 1, 'content': '你个文盲', 'id': 3}], 'parent_id': None, 'content': '灌我鸟事', 'id': 1}
     {'user': '银秋良', 'children': [{'user': '详解', 'children': [], 'parent_id': 2, 'content': '好羡慕你们这些没脸的人呀', 'id': 4}], 'parent_id': None, 'content': '管我鸟事', 'id': 2}
     """
-
-    html = build_comment_tree(com_list)
+    # print(com_list)
+    # html = build_comment_tree(com_list)
     # return render(request,'index.html',{'comment_html':html})
-    return HttpResponse(html)
+    return HttpResponse(json.dumps(com_list))
 
 def add_pub(request):
     response = BaseResponse()

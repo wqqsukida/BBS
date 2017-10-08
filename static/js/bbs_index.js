@@ -291,25 +291,76 @@ $("#content-list").on("click",".discus-a",function () {
         type:"POST",
         headers:{"X-CSRFToken": $.cookie('csrftoken')},
         data:{"new_id":new_id},
+        dataType:"JSON",
         success:function (arg) {
-            // console.log(arg);
-            $this.children('.comment-box').append(arg)
+            var tree = build_comment_tree(arg);
+            $this.children('.comment-box').append(tree)
         }
     });
         $this.removeClass('hide')
     }else{
-        $this.children('.comment-box').empty();
+        $this.children('.comment-box').empty(); //清空评论栏
+        $this.find(".reply-target").attr("reid",""); //清空要回复用户的id
+        $this.find(".reply-target").text(""); // 清空要回复的用户
         $this.addClass('hide')
     }
 
 });
+
+// 字符串格式化函数
+String.format = function() {
+    if (arguments.length == 0)
+        return null;
+    var str = arguments[0];
+    for ( var i = 1; i < arguments.length; i++) {
+        var re = new RegExp('\\{' + (i - 1) + '\\}', 'gm');
+        str = str.replace(re, arguments[i]);
+    }
+    return str;
+};
+// 生成评论树形结构函数
+tree = '<ul class="comment-list"> <li class="comment-reply"> <div class="comment-R comment-R-top" > <a class="name" href="">{0}:</a> <span class="p3">{1}</span> <span class="into-time into-time-top">发布时间：{2}</span> <a class="reply-user" comid={3}>【回复】</a> </div> </li>{4} </ul>';
+
+function build_comment_tree(arg) {
+    // console.log(arg);
+
+    var html_tree = "";
+    for (var k in arg){
+        if(arg[k]['children']){
+            // console.log(arg[k]);
+            html_tree += String.format(tree,
+                arg[k]['commenter_id__username'],
+                arg[k]['content'],
+                arg[k]['ctime'],
+                arg[k]['id'],
+                build_comment_tree(arg[k]['children'])
+            )
+        }else{
+            // console.log(arg[k]);
+            html_tree += String.format(tree,
+                arg[k]['commenter_id__username'],
+                arg[k]['content'],
+                arg[k]['ctime'],
+                arg[k]['id'],
+                ""
+            )
+        }
+    }
+
+
+    return html_tree
+}
+
+
+
 
 //发布评论按钮绑定事件
 $("#content-list").on("click",".add-pub-btn",function () {
     if($('.action-nav a[href="/logout/"]').length){ //判断是否存在注销标签
         var new_id = $(this).parents(".comment-box-area").prev().attr("newid");
         var user_id = $("#login-user").attr("userid");
-        var pub_content = $(this).parent().prev().children('.txt-huifu').val();
+        var user_name = $("#login-user").text();
+        var pub_content = $(this).parent().prev().children('.txt-huifu').val().trim();
         var parent_id = $(this).parent().prev().children('.reply-target').attr("reid");
         var $this = $(this); //当前操作标签
 
@@ -323,7 +374,21 @@ $("#content-list").on("click",".add-pub-btn",function () {
             "parent_id":parent_id},
             dataType:"JSON",
             success:function (arg){
-                console.log(arg)
+                var html_tree = String.format(tree,user_name,pub_content,'刚刚发布','','');// ******此处应该附加comid******
+                console.log(html_tree);
+                if(arg.status){
+                    alert('评论成功！');
+                    $this.parent().prev().children('.txt-huifu').val("");
+                    if(parent_id){
+                        $(' a[comid='+parent_id+']').parents('.comment-reply').after(html_tree)
+                    }else{
+                        $this.parents('.huifu-box').prev().prepend(html_tree)
+                    }
+
+
+                }else{
+                    alert('发送失败！');
+                }
             }
         })
 
